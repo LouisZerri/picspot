@@ -141,11 +141,10 @@
             </div>
             <div v-else class="photo-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 <div v-for="photo in paginatedPhotos" :key="photo.id"
-                    class="photo-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer"
-                    @click="openImageModal(photo)">
+                    class="photo-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer">
                     <div class="relative">
                         <img :src="photo.image_path" :alt="photo.category + ' - ' + photo.location"
-                            class="h-48 w-full object-cover" />
+                            class="h-48 w-full object-cover" @click="openImageModal(photo)" />
                         <!-- Badge catégorie -->
                         <div class="absolute top-3 left-3">
                             <span :class="getCategoryBadgeClass(photo.category)"
@@ -200,16 +199,28 @@
                         <h3 class="font-bold text-gray-900 mb-2 text-lg leading-tight">
                             {{ photo.title }}
                         </h3>
-                        <!-- Localisation -->
-                        <div class="flex items-center text-gray-600 mb-4">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            <span class="text-sm">{{ photo.location }}</span>
+                        <div class="flex items-center justify-between text-gray-600 mb-4">
+
+                            <!-- Bloc localisation -->
+                            <div class="flex items-center space-x-2 flex-1">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span class="text-sm truncate">{{ photo.location }}</span>
+                            </div>
+
+                            <!-- Lien externe plus visible -->
+                            <a v-if="photo.link" :href="photo.link" @click.stop target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex z-50 items-center gap-1 px-2 py-1 ml-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-md transition-colors duration-200 flex-shrink-0"
+                                title="Voir le lien associé">
+                                <i class="fas fa-link"></i>
+                                <span>Lien</span>
+                            </a>
                         </div>
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-2">
@@ -218,6 +229,7 @@
                                 {{ tag }}
                             </span>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -306,6 +318,30 @@
                                 {{ tag }}
                             </span>
                         </div>
+                        <!-- Boutons de partage -->
+                        <div class="mt-4 flex gap-4 text-white text-xl">
+                            <!-- Facebook -->
+                            <a :href="`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getImageShareUrl(selectedPhoto))}`"
+                                @click.stop target="_blank" rel="noopener" class="hover:text-blue-400"
+                                title="Partager sur Facebook">
+                                <i class="fab fa-facebook-square"></i>
+                            </a>
+
+                            <!-- WhatsApp -->
+                            <a :href="`https://wa.me/?text=${encodeURIComponent(getImageShareUrl(selectedPhoto))}`"
+                                @click.stop target="_blank" rel="noopener" class="hover:text-green-400"
+                                title="Partager sur WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+
+                            <!-- Instagram -->
+                            <a href="https://www.instagram.com" @click.stop target="_blank" rel="noopener"
+                                class="hover:text-pink-400" title="Télécharger l’image et publier sur Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        </div>
+
+
                     </div>
                     <div class="ml-4 flex items-center">
                         <button @click.stop="toggleLike(selectedPhoto)" :disabled="selectedPhoto?.isLiking"
@@ -409,6 +445,12 @@ const displayedPages = computed(() => {
 
     return pages;
 });
+
+const getImageShareUrl = (photo) => {
+    if (!photo || !photo.image_path) return '';
+    return `${window.location.origin}/${photo.image_path}`;
+};
+
 
 const categories = [
     {
