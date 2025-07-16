@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PictureController;
@@ -30,4 +31,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/photos/{picture}/like', [PictureController::class, 'like']);
     Route::post('/photos/{picture}/unlike', [PictureController::class, 'unlike']);
     Route::get('/user/likes', [PictureController::class, 'userLikes']);
+});
+
+// Administration
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::delete('/pictures/{picture}', [AdminController::class, 'deletePicture'])->name('pictures.delete');
+    Route::post('/pictures/bulk-delete', [AdminController::class, 'bulkDelete'])->name('bulk-delete');
 });
