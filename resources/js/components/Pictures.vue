@@ -143,8 +143,10 @@
                 <div v-for="photo in paginatedPhotos" :key="photo.id"
                     class="photo-card bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer">
                     <div class="relative">
+                        <!-- Image avec gestion du clic : modal ou lien externe -->
                         <img :src="photo.image_path" :alt="photo.category + ' - ' + photo.location"
-                            class="h-48 w-full object-cover" @click="openImageModal(photo)" />
+                            class="h-48 w-full object-cover" 
+                            @click="handleImageClick(photo)" />
                         <!-- Badge catégorie -->
                         <div class="absolute top-3 left-3">
                             <span :class="getCategoryBadgeClass(photo.category)"
@@ -213,14 +215,13 @@
                                 <span class="text-sm truncate">{{ photo.location }}</span>
                             </div>
 
-                            <!-- Lien externe plus visible -->
-                            <a v-if="photo.link" :href="photo.link" @click.stop target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex z-50 items-center gap-1 px-2 py-1 ml-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-md transition-colors duration-200 flex-shrink-0"
-                                title="Voir le lien associé">
-                                <i class="fas fa-link"></i>
-                                <span>Lien</span>
-                            </a>
+                            <!-- Bouton "Voir les détails" qui ouvre la modal -->
+                            <button @click.stop="openImageModal(photo)"
+                                class="inline-flex z-50 items-center gap-1 px-2 py-1 ml-2 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-md transition-colors duration-200 flex-shrink-0 cursor-pointer"
+                                title="Voir les détails">
+                                <i class="fas fa-eye"></i>
+                                <span>Détails</span>
+                            </button>
                         </div>
                         <!-- Tags -->
                         <div class="flex flex-wrap gap-2">
@@ -312,14 +313,29 @@
                                 {{ selectedPhoto?.category }}
                             </span>
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-2 mb-4">
                             <span v-for="(tag, index) in JSON.parse(selectedPhoto?.tags || '[]')" :key="tag"
                                 class="px-2 py-1 text-xs bg-white/20 text-white rounded-full">
                                 {{ tag }}
                             </span>
                         </div>
+                        
+                        <!-- Bouton lien externe dans la modal -->
+                        <div v-if="selectedPhoto?.link" class="mb-4">
+                            <a :href="selectedPhoto.link" @click.stop target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors duration-200"
+                                title="Voir le lien associé">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                    </path>
+                                </svg>
+                                <span>Voir le lien</span>
+                            </a>
+                        </div>
+                        
                         <!-- Boutons de partage -->
-                        <div class="mt-4 flex gap-4 text-white text-xl">
+                        <div class="flex gap-4 text-white text-xl">
                             <!-- Facebook -->
                             <a :href="`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getImageShareUrl(selectedPhoto))}`"
                                 @click.stop target="_blank" rel="noopener" class="hover:text-blue-400"
@@ -336,12 +352,10 @@
 
                             <!-- Instagram -->
                             <a href="https://www.instagram.com" @click.stop target="_blank" rel="noopener"
-                                class="hover:text-pink-400" title="Télécharger l’image et publier sur Instagram">
+                                class="hover:text-pink-400" title="Télécharger l'image et publier sur Instagram">
                                 <i class="fab fa-instagram"></i>
                             </a>
                         </div>
-
-
                     </div>
                     <div class="ml-4 flex items-center">
                         <button @click.stop="toggleLike(selectedPhoto)" :disabled="selectedPhoto?.isLiking"
@@ -354,14 +368,6 @@
                             </svg>
                             <span class="text-sm font-medium">{{ selectedPhoto?.likes_count }}</span>
                         </button>
-                        <a v-if="selectedPhoto?.link" :href="selectedPhoto.link" target="_blank"
-                            class="ml-3 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-all duration-200">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                </path>
-                            </svg>
-                        </a>
                     </div>
                 </div>
             </div>
@@ -451,7 +457,6 @@ const getImageShareUrl = (photo) => {
     return `${window.location.origin}/${photo.image_path}`;
 };
 
-
 const categories = [
     {
         value: "communes",
@@ -528,6 +533,17 @@ const getCategoryActiveClass = (categoryValue) => {
     }
     // Sinon, vérifier si la catégorie correspond à la sélection actuelle
     return selectedCategory.value === categoryValue ? 'ring-4 ring-purple-300 scale-105' : '';
+};
+
+// Fonction pour gérer le clic sur l'image
+const handleImageClick = (photo) => {
+    // S'il y a un lien, rediriger vers le lien
+    if (photo.link) {
+        window.open(photo.link, '_blank');
+    } else {
+        // Sinon, ouvrir la modal
+        openImageModal(photo);
+    }
 };
 
 // Fonction pour gérer la recherche
@@ -649,7 +665,6 @@ const fetchPhotos = async () => {
 
 // Fonction pour gérer le like/unlike
 const toggleLike = async (photo) => {
-
     if (!isAuthenticated.value) {
         redirectToLogin('Vous devez être connecté pour aimer une photo');
         return;
@@ -682,7 +697,6 @@ const toggleLike = async (photo) => {
         }
 
         if (data.success) {
-
             // Mettre à jour l'état local immédiatement
             photo.isLiked = !wasLiked;
             photo.likes_count = data.likes_count;
@@ -691,7 +705,6 @@ const toggleLike = async (photo) => {
                 wasLiked ? 'Like retiré avec succès' : 'Photo likée avec succès !',
                 'success'
             );
-
         } else {
             throw new Error(data.message || 'Erreur lors du like');
         }
